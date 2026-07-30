@@ -1,12 +1,18 @@
 import type { Prompt, SiteData } from "./cms-types";
 
-export function sectionOf(data: SiteData, key: string) {
-  return data.sections.find((s) => s.section_key === key && s.is_visible);
+export function sectionOf(data: SiteData, key: string, page = "home") {
+  return data.sections.find(
+    (s) => s.page_slug === page && s.section_key === key && s.is_visible,
+  );
 }
 
-export function sectionCopy(data: SiteData, key: string) {
-  const content = (sectionOf(data, key)?.content ?? {}) as Record<string, string>;
+export function sectionCopy(data: SiteData, key: string, page = "home") {
+  const content = (sectionOf(data, key, page)?.content ?? {}) as Record<string, string>;
   return content;
+}
+
+export function pageSections(data: SiteData, page: string) {
+  return data.sections.filter((s) => s.page_slug === page && s.is_visible);
 }
 
 export function categoryName(data: SiteData, id: string | null) {

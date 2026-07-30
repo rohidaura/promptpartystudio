@@ -19,11 +19,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
       .select("*")
       .order("sort_order", { ascending: true }),
     db.from("nav_items").select("*").order("sort_order", { ascending: true }),
-    db
-      .from("page_sections")
-      .select("*")
-      .eq("page_slug", "home")
-      .order("sort_order", { ascending: true }),
+    db.from("page_sections").select("*").order("sort_order", { ascending: true }),
   ]);
 
   const settingsMap: Record<string, unknown> = {};
