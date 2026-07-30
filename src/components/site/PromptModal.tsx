@@ -165,7 +165,7 @@ export function PromptModal({
                     {copied ? "Copied" : "Copy"}
                   </button>
                 </div>
-                <pre className="mt-4 whitespace-pre-wrap break-words font-body text-sm leading-relaxed text-foreground/90">
+                <pre className="mt-4 whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground/90">
                   {prompt.prompt_text}
                 </pre>
               </div>
