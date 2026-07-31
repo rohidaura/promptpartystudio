@@ -1,16 +1,33 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getAdminData, getMyAccess } from "./admin.functions";
+import type {
+  Category,
+  MediaItem,
+  NavItem,
+  PageSection,
+  Prompt,
+  Review,
+} from "./cms-types";
 
-export type AdminData = Awaited<ReturnType<typeof getAdminData>>;
+export type AdminData = {
+  settings: Record<string, Record<string, unknown>>;
+  categories: Category[];
+  prompts: Prompt[];
+  reviews: Review[];
+  navItems: NavItem[];
+  sections: PageSection[];
+  media: MediaItem[];
+  events: { event_type: string; created_at: string }[];
+};
 
 export const adminQuery = queryOptions({
   queryKey: ["admin-data"],
-  queryFn: () => getAdminData(),
+  queryFn: () => getAdminData() as unknown as Promise<AdminData>,
   staleTime: 5_000,
 });
 
 export const accessQuery = queryOptions({
   queryKey: ["my-access"],
-  queryFn: () => getMyAccess(),
+  queryFn: () => getMyAccess() as unknown as Promise<{ userId: string; isAdmin: boolean }>,
   staleTime: 60_000,
 });
