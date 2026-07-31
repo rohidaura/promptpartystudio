@@ -35,7 +35,7 @@ export const getAdminData = createServerFn({ method: "GET" })
     for (const row of settings.data ?? []) settingsMap[row.key] = row.value;
 
     return {
-      settings: settingsMap,
+      settings: settingsMap as Record<string, Record<string, string>>,
       categories: categories.data ?? [],
       prompts: prompts.data ?? [],
       reviews: reviews.data ?? [],
