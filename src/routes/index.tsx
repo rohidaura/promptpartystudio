@@ -17,25 +17,11 @@ import { ContactSection } from "@/components/site/ContactSection";
 import { PromptModal } from "@/components/site/PromptModal";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { categoryName, sectionCopy, sectionOf } from "@/lib/site-helpers";
+import { buildMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(siteQuery),
-  head: () => ({
-    meta: [
-      { title: "PromptVault — A curated marketplace of cinematic AI prompts" },
-      {
-        name: "description",
-        content:
-          "Browse, preview and copy production-ready AI prompts for image, video and copy models. Every prompt tested, rated and ready to paste.",
-      },
-      { property: "og:title", content: "PromptVault — Curated AI prompts" },
-      {
-        property: "og:description",
-        content:
-          "A liquid-glass library of cinematic, tested AI prompts for image, video and writing models.",
-      },
-    ],
-  }),
+  head: ({ loaderData }) => ({ meta: buildMeta(loaderData?.settings) }),
   component: Home,
 });
 

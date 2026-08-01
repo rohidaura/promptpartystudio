@@ -3,22 +3,15 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { siteQuery } from "@/lib/cms-queries";
 import { SiteChrome } from "@/components/site/SiteChrome";
 import { LegalPage } from "@/components/site/LegalPage";
+import { buildMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
   loader: ({ context }) => context.queryClient.ensureQueryData(siteQuery),
-  head: () => ({
-    meta: [
-      { title: "Privacy Policy — PromptVault" },
-      {
-        name: "description",
-        content: "How PromptVault collects, stores and protects the data behind the prompt vault.",
-      },
-      { property: "og:title", content: "Privacy Policy — PromptVault" },
-      {
-        property: "og:description",
-        content: "How PromptVault collects, stores and protects your data.",
-      },
-    ],
+  head: ({ loaderData }) => ({
+    meta: buildMeta(loaderData?.settings, {
+      suffix: "Privacy Policy",
+      description: "How we collect, store and protect the data behind this prompt library.",
+    }),
   }),
   component: () => {
     const { data } = useSuspenseQuery(siteQuery);

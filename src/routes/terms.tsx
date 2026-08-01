@@ -3,22 +3,15 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { siteQuery } from "@/lib/cms-queries";
 import { SiteChrome } from "@/components/site/SiteChrome";
 import { LegalPage } from "@/components/site/LegalPage";
+import { buildMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
   loader: ({ context }) => context.queryClient.ensureQueryData(siteQuery),
-  head: () => ({
-    meta: [
-      { title: "Terms of Use — PromptVault" },
-      {
-        name: "description",
-        content: "The terms that cover licensing, usage and redistribution of PromptVault prompts.",
-      },
-      { property: "og:title", content: "Terms of Use — PromptVault" },
-      {
-        property: "og:description",
-        content: "Licensing and usage terms for prompts published on PromptVault.",
-      },
-    ],
+  head: ({ loaderData }) => ({
+    meta: buildMeta(loaderData?.settings, {
+      suffix: "Terms of Use",
+      description: "The terms covering licensing, usage and redistribution of these prompts.",
+    }),
   }),
   component: () => {
     const { data } = useSuspenseQuery(siteQuery);

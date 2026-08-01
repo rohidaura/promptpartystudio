@@ -6,23 +6,16 @@ import { SectionHeading } from "@/components/site/SectionHeading";
 import { Reviews } from "@/components/site/Reviews";
 import { ContactSection } from "@/components/site/ContactSection";
 import { sectionCopy } from "@/lib/site-helpers";
+import { buildMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/reviews")({
   loader: ({ context }) => context.queryClient.ensureQueryData(siteQuery),
-  head: () => ({
-    meta: [
-      { title: "Reviews — what creators say about PromptVault" },
-      {
-        name: "description",
-        content:
-          "Ratings and first-hand notes from designers, founders and filmmakers shipping work with PromptVault prompts.",
-      },
-      { property: "og:title", content: "Reviews — PromptVault" },
-      {
-        property: "og:description",
-        content: "Ratings and notes from creators shipping work with PromptVault prompts.",
-      },
-    ],
+  head: ({ loaderData }) => ({
+    meta: buildMeta(loaderData?.settings, {
+      suffix: "Reviews",
+      description:
+        "Ratings and first-hand notes from designers, founders and filmmakers shipping work with these prompts.",
+    }),
   }),
   component: ReviewsPage,
 });
