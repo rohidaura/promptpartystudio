@@ -7,31 +7,26 @@ import { SiteChrome } from "@/components/site/SiteChrome";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { PromptCard } from "@/components/site/PromptCard";
 import { PromptModal } from "@/components/site/PromptModal";
+import { buildMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/category/$slug")({
   loader: async ({ context, params }) => {
     const data = await context.queryClient.ensureQueryData(siteQuery);
     const category = data.categories.find((c) => c.slug === params.slug);
     if (!category) throw notFound();
-    return { category };
+    return { category, settings: data.settings };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
-      return {
-        meta: [{ title: "Category not found — PromptVault" }, { name: "robots", content: "noindex" }],
-      };
+      return { meta: buildMeta(undefined, { suffix: "Category not found", noindex: true }) };
     }
-    const { category } = loaderData;
-    const title = `${category.name} prompts — PromptVault`;
-    const description =
-      category.description ?? `Curated ${category.name.toLowerCase()} prompts, tested and ready to paste.`;
     return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-      ],
+      meta: buildMeta(loaderData.settings, {
+        suffix: `${loaderData.category.name} prompts`,
+        description:
+          loaderData.category.description ??
+          `Curated ${loaderData.category.name.toLowerCase()} prompts, tested and ready to paste.`,
+      }),
     };
   },
   component: CategoryPage,

@@ -5,19 +5,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button, Field, Input, Panel } from "@/components/admin/ui";
 
 export const Route = createFileRoute("/auth")({
+  ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — PromptVault Studio" },
+      { title: "Studio sign in" },
       {
         name: "description",
-        content:
-          "Sign in to PromptVault Studio to manage prompts, categories, media and site content.",
+        content: "Sign in to the content studio to manage prompts, categories, media and layout.",
       },
-      { property: "og:title", content: "Sign in — PromptVault Studio" },
-      {
-        property: "og:description",
-        content: "Secure access to the PromptVault content management studio.",
-      },
+      { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Studio sign in" },
+      { property: "og:description", content: "Secure access to the content management studio." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AuthPage,
@@ -69,7 +69,7 @@ function AuthPage() {
       <div className="w-full max-w-md">
         <Panel
           title={mode === "signin" ? "Studio sign in" : "Create your studio account"}
-          description="Content management for PromptVault."
+          description="Content management studio."
         >
           <form onSubmit={submit} className="space-y-4">
             <Field label="Email">
