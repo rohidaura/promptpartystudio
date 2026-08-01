@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { Button, Field, Input, Panel, Textarea } from "@/components/admin/ui";
 import { MediaPicker } from "@/components/admin/MediaPicker";
-import { useAdminData, useCms } from "@/components/admin/useAdmin";
+import { useAdminData, useCms, useSyncedState } from "@/components/admin/useAdmin";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: SettingsAdmin,
@@ -11,9 +10,9 @@ export const Route = createFileRoute("/_authenticated/admin/settings")({
 function SettingsAdmin() {
   const data = useAdminData();
   const { settingMutation } = useCms();
-  const [site, setSite] = useState<Record<string, unknown>>(data.settings.site ?? {});
-  const [seo, setSeo] = useState<Record<string, unknown>>(data.settings.seo ?? {});
-  const [contact, setContact] = useState<Record<string, unknown>>(data.settings.contact ?? {});
+  const [site, setSite] = useSyncedState<Record<string, unknown>>(data.settings.site ?? {});
+  const [seo, setSeo] = useSyncedState<Record<string, unknown>>(data.settings.seo ?? {});
+  const [contact, setContact] = useSyncedState<Record<string, unknown>>(data.settings.contact ?? {});
 
   return (
     <div className="space-y-6">
