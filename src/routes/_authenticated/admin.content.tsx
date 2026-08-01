@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { Button, Field, Input, Panel, Select, Textarea, Toggle } from "@/components/admin/ui";
 import { MediaPicker } from "@/components/admin/MediaPicker";
-import { useAdminData, useCms } from "@/components/admin/useAdmin";
+import { useAdminData, useCms, useSyncedState } from "@/components/admin/useAdmin";
 
 export const Route = createFileRoute("/_authenticated/admin/content")({
   component: ContentAdmin,
@@ -12,11 +12,18 @@ export const Route = createFileRoute("/_authenticated/admin/content")({
 function ContentAdmin() {
   const data = useAdminData();
   const { saveMutation, deleteMutation, settingMutation } = useCms();
-  const [hero, setHero] = useState<Record<string, unknown>>(data.settings.hero ?? {});
+  const [hero, setHero] = useSyncedState<Record<string, unknown>>(data.settings.hero ?? {});
   const setHeroField = (k: string, v: unknown) => setHero((h) => ({ ...h, [k]: v }));
 
-  const move = (id: string, table: "page_sections" | "nav_items", order: number) =>
-    saveMutation.mutate({ table, values: { id, sort_order: order } });
+  /** Swap sort_order with the neighbouring row so ordering can't collide. */
+  const swap = (
+    table: "page_sections" | "nav_items",
+    a: { id: string; sort_order: number },
+    b: { id: string; sort_order: number },
+  ) => {
+    saveMutation.mutate({ table, values: { id: a.id, sort_order: b.sort_order } });
+    saveMutation.mutate({ table, values: { id: b.id, sort_order: a.sort_order } });
+  };
 
   return (
     <div className="space-y-6">
@@ -76,12 +83,44 @@ function ContentAdmin() {
               onChange={(e) => setHeroField("right_caption", e.target.value)}
             />
           </Field>
+          <Field label="Left panel style">
+            <Select
+              value={String(hero.left_media_kind ?? "gradient")}
+              onChange={(e) => setHeroField("left_media_kind", e.target.value)}
+            >
+              <option value="gradient">Gradient</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="text">Text</option>
+            </Select>
+          </Field>
+          <Field label="Right panel style">
+            <Select
+              value={String(hero.right_media_kind ?? "image")}
+              onChange={(e) => setHeroField("right_media_kind", e.target.value)}
+            >
+              <option value="gradient">Gradient</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="text">Text</option>
+            </Select>
+          </Field>
           <MediaPicker
             label="Ambient background"
             media={data.media}
             value={String(hero.background_url ?? "")}
             onChange={(v) => setHeroField("background_url", v)}
           />
+          <Field label="Ambient background style">
+            <Select
+              value={String(hero.background_kind ?? "gradient")}
+              onChange={(e) => setHeroField("background_kind", e.target.value)}
+            >
+              <option value="gradient">Gradient only</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+            </Select>
+          </Field>
         </div>
         <div className="mt-5">
           <Button
@@ -104,10 +143,12 @@ function ContentAdmin() {
               section={s}
               onSave={(values) => saveMutation.mutate({ table: "page_sections", values })}
               onDelete={() => deleteMutation.mutate({ table: "page_sections", id: s.id })}
-              onUp={i > 0 ? () => move(s.id, "page_sections", s.sort_order - 1) : undefined}
+              onUp={
+                i > 0 ? () => swap("page_sections", s, data.sections[i - 1]!) : undefined
+              }
               onDown={
                 i < data.sections.length - 1
-                  ? () => move(s.id, "page_sections", s.sort_order + 1)
+                  ? () => swap("page_sections", s, data.sections[i + 1]!)
                   : undefined
               }
             />
