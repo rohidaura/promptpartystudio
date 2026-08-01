@@ -179,9 +179,15 @@ function SectionRow({
   onDown?: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [json, setJson] = useState(JSON.stringify(section.content ?? {}, null, 2));
+  const [content, setContent] = useState<Record<string, unknown>>(section.content ?? {});
   const [label, setLabel] = useState(section.label);
+  const [showJson, setShowJson] = useState(false);
+  const [json, setJson] = useState(JSON.stringify(section.content ?? {}, null, 2));
   const [error, setError] = useState<string | null>(null);
+  const setField = (k: string, v: string) => setContent((c) => ({ ...c, [k]: v }));
+  const extraKeys = Object.keys(content).filter(
+    (k) => !["eyebrow", "title", "description"].includes(k),
+  );
 
   return (
     <li className="glass-soft rounded-2xl p-3">
@@ -216,26 +222,71 @@ function SectionRow({
           <Field label="Label">
             <Input value={label} onChange={(e) => setLabel(e.target.value)} />
           </Field>
-          <Field label="Content (JSON)" hint={error ?? "Headings, copy and options for this block."}>
-            <Textarea
-              className="min-h-40 font-mono text-xs"
-              value={json}
-              onChange={(e) => setJson(e.target.value)}
-            />
-          </Field>
-          <Button
-            onClick={() => {
-              try {
-                const parsed = JSON.parse(json);
-                setError(null);
-                onSave({ id: section.id, label, content: parsed });
-              } catch (err) {
-                setError((err as Error).message);
-              }
-            }}
-          >
-            Save section
-          </Button>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <Field label="Eyebrow">
+              <Input
+                value={String(content.eyebrow ?? "")}
+                onChange={(e) => setField("eyebrow", e.target.value)}
+              />
+            </Field>
+            <Field label="Title">
+              <Input
+                value={String(content.title ?? "")}
+                onChange={(e) => setField("title", e.target.value)}
+              />
+            </Field>
+            <Field label="Description" className="lg:col-span-2">
+              <Textarea
+                value={String(content.description ?? "")}
+                onChange={(e) => setField("description", e.target.value)}
+              />
+            </Field>
+            {extraKeys.map((k) =>
+              typeof content[k] === "string" ? (
+                <Field key={k} label={k.replace(/_/g, " ")}>
+                  <Input value={String(content[k])} onChange={(e) => setField(k, e.target.value)} />
+                </Field>
+              ) : null,
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={() => onSave({ id: section.id, label, content })}>Save section</Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setJson(JSON.stringify(content, null, 2));
+                setShowJson(!showJson);
+              }}
+            >
+              {showJson ? "Hide advanced JSON" : "Advanced JSON"}
+            </Button>
+          </div>
+
+          {showJson ? (
+            <Field label="Content (JSON)" hint={error ?? "Full block payload for advanced edits."}>
+              <Textarea
+                className="min-h-40 font-mono text-xs"
+                value={json}
+                onChange={(e) => setJson(e.target.value)}
+              />
+              <Button
+                className="mt-3"
+                onClick={() => {
+                  try {
+                    const parsed = JSON.parse(json) as Record<string, unknown>;
+                    setError(null);
+                    setContent(parsed);
+                    onSave({ id: section.id, label, content: parsed });
+                  } catch (err) {
+                    setError((err as Error).message);
+                  }
+                }}
+              >
+                Save JSON
+              </Button>
+            </Field>
+          ) : null}
         </div>
       ) : null}
     </li>
