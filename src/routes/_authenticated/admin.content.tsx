@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { Button, Field, Input, Panel, Select, Textarea, Toggle } from "@/components/admin/ui";
 import { MediaPicker } from "@/components/admin/MediaPicker";
-import { useAdminData, useCms } from "@/components/admin/useAdmin";
+import { useAdminData, useCms, useSyncedState } from "@/components/admin/useAdmin";
 
 export const Route = createFileRoute("/_authenticated/admin/content")({
   component: ContentAdmin,
@@ -12,11 +12,18 @@ export const Route = createFileRoute("/_authenticated/admin/content")({
 function ContentAdmin() {
   const data = useAdminData();
   const { saveMutation, deleteMutation, settingMutation } = useCms();
-  const [hero, setHero] = useState<Record<string, unknown>>(data.settings.hero ?? {});
+  const [hero, setHero] = useSyncedState<Record<string, unknown>>(data.settings.hero ?? {});
   const setHeroField = (k: string, v: unknown) => setHero((h) => ({ ...h, [k]: v }));
 
-  const move = (id: string, table: "page_sections" | "nav_items", order: number) =>
-    saveMutation.mutate({ table, values: { id, sort_order: order } });
+  /** Swap sort_order with the neighbouring row so ordering can't collide. */
+  const swap = (
+    table: "page_sections" | "nav_items",
+    a: { id: string; sort_order: number },
+    b: { id: string; sort_order: number },
+  ) => {
+    saveMutation.mutate({ table, values: { id: a.id, sort_order: b.sort_order } });
+    saveMutation.mutate({ table, values: { id: b.id, sort_order: a.sort_order } });
+  };
 
   return (
     <div className="space-y-6">
@@ -76,12 +83,44 @@ function ContentAdmin() {
               onChange={(e) => setHeroField("right_caption", e.target.value)}
             />
           </Field>
+          <Field label="Left panel style">
+            <Select
+              value={String(hero.left_media_kind ?? "gradient")}
+              onChange={(e) => setHeroField("left_media_kind", e.target.value)}
+            >
+              <option value="gradient">Gradient</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="text">Text</option>
+            </Select>
+          </Field>
+          <Field label="Right panel style">
+            <Select
+              value={String(hero.right_media_kind ?? "image")}
+              onChange={(e) => setHeroField("right_media_kind", e.target.value)}
+            >
+              <option value="gradient">Gradient</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="text">Text</option>
+            </Select>
+          </Field>
           <MediaPicker
             label="Ambient background"
             media={data.media}
             value={String(hero.background_url ?? "")}
             onChange={(v) => setHeroField("background_url", v)}
           />
+          <Field label="Ambient background style">
+            <Select
+              value={String(hero.background_kind ?? "gradient")}
+              onChange={(e) => setHeroField("background_kind", e.target.value)}
+            >
+              <option value="gradient">Gradient only</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+            </Select>
+          </Field>
         </div>
         <div className="mt-5">
           <Button
@@ -104,10 +143,12 @@ function ContentAdmin() {
               section={s}
               onSave={(values) => saveMutation.mutate({ table: "page_sections", values })}
               onDelete={() => deleteMutation.mutate({ table: "page_sections", id: s.id })}
-              onUp={i > 0 ? () => move(s.id, "page_sections", s.sort_order - 1) : undefined}
+              onUp={
+                i > 0 ? () => swap("page_sections", s, data.sections[i - 1]!) : undefined
+              }
               onDown={
                 i < data.sections.length - 1
-                  ? () => move(s.id, "page_sections", s.sort_order + 1)
+                  ? () => swap("page_sections", s, data.sections[i + 1]!)
                   : undefined
               }
             />
@@ -138,9 +179,15 @@ function SectionRow({
   onDown?: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [json, setJson] = useState(JSON.stringify(section.content ?? {}, null, 2));
+  const [content, setContent] = useState<Record<string, unknown>>(section.content ?? {});
   const [label, setLabel] = useState(section.label);
+  const [showJson, setShowJson] = useState(false);
+  const [json, setJson] = useState(JSON.stringify(section.content ?? {}, null, 2));
   const [error, setError] = useState<string | null>(null);
+  const setField = (k: string, v: string) => setContent((c) => ({ ...c, [k]: v }));
+  const extraKeys = Object.keys(content).filter(
+    (k) => !["eyebrow", "title", "description"].includes(k),
+  );
 
   return (
     <li className="glass-soft rounded-2xl p-3">
@@ -175,26 +222,71 @@ function SectionRow({
           <Field label="Label">
             <Input value={label} onChange={(e) => setLabel(e.target.value)} />
           </Field>
-          <Field label="Content (JSON)" hint={error ?? "Headings, copy and options for this block."}>
-            <Textarea
-              className="min-h-40 font-mono text-xs"
-              value={json}
-              onChange={(e) => setJson(e.target.value)}
-            />
-          </Field>
-          <Button
-            onClick={() => {
-              try {
-                const parsed = JSON.parse(json);
-                setError(null);
-                onSave({ id: section.id, label, content: parsed });
-              } catch (err) {
-                setError((err as Error).message);
-              }
-            }}
-          >
-            Save section
-          </Button>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <Field label="Eyebrow">
+              <Input
+                value={String(content.eyebrow ?? "")}
+                onChange={(e) => setField("eyebrow", e.target.value)}
+              />
+            </Field>
+            <Field label="Title">
+              <Input
+                value={String(content.title ?? "")}
+                onChange={(e) => setField("title", e.target.value)}
+              />
+            </Field>
+            <Field label="Description" className="lg:col-span-2">
+              <Textarea
+                value={String(content.description ?? "")}
+                onChange={(e) => setField("description", e.target.value)}
+              />
+            </Field>
+            {extraKeys.map((k) =>
+              typeof content[k] === "string" ? (
+                <Field key={k} label={k.replace(/_/g, " ")}>
+                  <Input value={String(content[k])} onChange={(e) => setField(k, e.target.value)} />
+                </Field>
+              ) : null,
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={() => onSave({ id: section.id, label, content })}>Save section</Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setJson(JSON.stringify(content, null, 2));
+                setShowJson(!showJson);
+              }}
+            >
+              {showJson ? "Hide advanced JSON" : "Advanced JSON"}
+            </Button>
+          </div>
+
+          {showJson ? (
+            <Field label="Content (JSON)" hint={error ?? "Full block payload for advanced edits."}>
+              <Textarea
+                className="min-h-40 font-mono text-xs"
+                value={json}
+                onChange={(e) => setJson(e.target.value)}
+              />
+              <Button
+                className="mt-3"
+                onClick={() => {
+                  try {
+                    const parsed = JSON.parse(json) as Record<string, unknown>;
+                    setError(null);
+                    setContent(parsed);
+                    onSave({ id: section.id, label, content: parsed });
+                  } catch (err) {
+                    setError((err as Error).message);
+                  }
+                }}
+              >
+                Save JSON
+              </Button>
+            </Field>
+          ) : null}
         </div>
       ) : null}
     </li>

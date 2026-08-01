@@ -1,11 +1,29 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { adminQuery } from "@/lib/admin-queries";
 import { deleteRow, saveRow, saveSetting } from "@/lib/admin.functions";
 
 export function useAdminData() {
   return useSuspenseQuery(adminQuery).data;
+}
+
+/**
+ * Local editor state that re-syncs whenever the CMS record changes on the
+ * server (after a save or a refetch), so panels never show stale values.
+ */
+export function useSyncedState<T>(remote: T) {
+  const [value, setValue] = useState<T>(remote);
+  const snapshot = useRef(JSON.stringify(remote));
+  useEffect(() => {
+    const next = JSON.stringify(remote);
+    if (next !== snapshot.current) {
+      snapshot.current = next;
+      setValue(remote);
+    }
+  }, [remote]);
+  return [value, setValue] as const;
 }
 
 export function useCms() {

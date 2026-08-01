@@ -26,13 +26,16 @@ export const Route = createFileRoute("/_authenticated/admin")({
   },
   head: () => ({
     meta: [
-      { title: "Studio — PromptVault CMS" },
+      { title: "Content Studio" },
       {
         name: "description",
-        content: "Manage prompts, categories, media, layout, theme and SEO for PromptVault.",
+        content: "Manage prompts, categories, media, layout, theme and SEO.",
       },
-      { property: "og:title", content: "PromptVault Studio" },
-      { property: "og:description", content: "The content management studio for PromptVault." },
+      { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Content Studio" },
+      { property: "og:description", content: "The content management studio for this site." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AdminLayout,

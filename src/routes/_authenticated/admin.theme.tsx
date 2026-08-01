@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { Button, Field, Input, Panel } from "@/components/admin/ui";
-import { useAdminData, useCms } from "@/components/admin/useAdmin";
+import { useAdminData, useCms, useSyncedState } from "@/components/admin/useAdmin";
 
 export const Route = createFileRoute("/_authenticated/admin/theme")({
   component: ThemeAdmin,
@@ -27,7 +26,7 @@ const colors = [
 function ThemeAdmin() {
   const data = useAdminData();
   const { settingMutation } = useCms();
-  const [theme, setTheme] = useState<Record<string, unknown>>(data.settings.theme ?? {});
+  const [theme, setTheme] = useSyncedState<Record<string, unknown>>(data.settings.theme ?? {});
   const set = (k: string, v: unknown) => setTheme((t) => ({ ...t, [k]: v }));
 
   return (
