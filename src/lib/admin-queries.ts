@@ -26,8 +26,15 @@ export const adminQuery = queryOptions({
   staleTime: 5_000,
 });
 
+export type StudioAccess = {
+  userId: string;
+  email: string | null;
+  isAdmin: boolean;
+  reason: string;
+};
+
 export const accessQuery = queryOptions({
   queryKey: ["my-access"],
-  queryFn: () => getMyAccess() as unknown as Promise<{ userId: string; isAdmin: boolean }>,
+  queryFn: () => getMyAccess() as unknown as Promise<StudioAccess>,
   staleTime: 60_000,
 });
