@@ -32,10 +32,10 @@ function AuthPage() {
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate({ to: "/admin", replace: true });
+      if (session) navigate({ to: "/studio/dashboard", replace: true });
     });
     supabase.auth.getSession().then(({ data: s }) => {
-      if (s.session) navigate({ to: "/admin", replace: true });
+      if (s.session) navigate({ to: "/studio/dashboard", replace: true });
     });
     return () => data.subscription.unsubscribe();
   }, [navigate]);

@@ -109,13 +109,34 @@ export const saveSetting = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** True when the signed-in user holds the admin role. */
+/**
+ * Resolves studio access for the signed-in user. Grants the admin role when the
+ * account's email is on the admins allowlist, or bootstraps the very first
+ * account when no admin exists yet.
+ */
 export const getMyAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    return { userId: context.userId, isAdmin: Boolean(data) };
+    const email = (context.claims as { email?: string }).email ?? null;
+    const { data, error } = await context.supabase.rpc("claim_admin_access");
+    const result = (data ?? {}) as { isAdmin?: boolean; reason?: string };
+
+    if (import.meta.env.DEV) {
+      console.log("[studio-access]", {
+        userId: context.userId,
+        email,
+        isAdmin: Boolean(result.isAdmin),
+        reason: result.reason ?? null,
+        error: error?.message ?? null,
+      });
+    }
+
+    if (error) throw new Error(error.message);
+
+    return {
+      userId: context.userId,
+      email,
+      isAdmin: Boolean(result.isAdmin),
+      reason: result.reason ?? "unknown",
+    };
   });

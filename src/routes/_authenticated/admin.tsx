@@ -1,4 +1,11 @@
-import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -19,8 +26,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(accessQuery);
+  loader: async ({ context }) => {
+    const access = await context.queryClient.ensureQueryData(accessQuery);
+    if (!access.isAdmin) throw redirect({ to: "/access-denied" });
     context.queryClient.ensureQueryData(adminQuery);
     context.queryClient.ensureQueryData(siteQuery);
   },
@@ -53,7 +61,6 @@ const links = [
 ];
 
 function AdminLayout() {
-  const { data: access } = useSuspenseQuery(accessQuery);
   const { data: site } = useSuspenseQuery(siteQuery);
   const path = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
@@ -114,16 +121,7 @@ function AdminLayout() {
         </aside>
 
         <main className="min-w-0 flex-1">
-          {access.isAdmin ? (
-            <Outlet />
-          ) : (
-            <div className="glass rounded-[var(--glass-radius)] p-8 text-center">
-              <h1 className="font-display text-xl">No studio access</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                This account doesn’t have the admin role. Sign in with an administrator account.
-              </p>
-            </div>
-          )}
+          <Outlet />
         </main>
       </div>
     </>
