@@ -1,4 +1,4 @@
-# Prompt Genesis
+# Prompt party
 
 Role & Core Directive You are an elite Full-Stack Engineer and world-class UI/UX Designer. Your task is to build a premium, world-class AI Prompt Marketplace with a fully dynamic CMS. The website must feel like a blend of Apple, Linear, Framer, Arc Browser, and Notion—minimal, luxurious, extremely fast, and elegant. Strict constraint: The UI must never look like a standard template, and absolutely no content or configuration can be hardcoded.
 
