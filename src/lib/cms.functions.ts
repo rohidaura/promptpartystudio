@@ -3,6 +3,31 @@ import { z } from "zod";
 
 /** Public site payload: everything the frontend renders, straight from the CMS. */
 export const getSiteData = createServerFn({ method: "GET" }).handler(async () => {
+  const empty = {
+    settings: {
+      site: {} as Record<string, never>,
+      hero: {} as Record<string, never>,
+      theme: {} as Record<string, never>,
+      contact: {} as Record<string, never>,
+      seo: {} as Record<string, never>,
+    },
+    categories: [] as Awaited<ReturnType<typeof loadSiteData>>["categories"],
+    prompts: [] as Awaited<ReturnType<typeof loadSiteData>>["prompts"],
+    reviews: [] as Awaited<ReturnType<typeof loadSiteData>>["reviews"],
+    navItems: [] as Awaited<ReturnType<typeof loadSiteData>>["navItems"],
+    sections: [] as Awaited<ReturnType<typeof loadSiteData>>["sections"],
+  };
+
+  try {
+    return await loadSiteData();
+  } catch (error) {
+    // Never take the whole page down because content could not be read.
+    console.error("[cms] getSiteData failed", error);
+    return empty;
+  }
+});
+
+async function loadSiteData() {
   const { createPublicClient } = await import("./cms.server");
   const db = createPublicClient();
 
@@ -39,7 +64,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
     navItems: navItems.data ?? [],
     sections: sections.data ?? [],
   };
-});
+}
 
 /** Records a view or copy for a prompt and bumps its counter. */
 export const trackPromptMetric = createServerFn({ method: "POST" })
