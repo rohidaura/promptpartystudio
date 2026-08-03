@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { getPublicSupabaseEnv } from "./supabase-public-env";
 
 /**
  * Publishable-key server client for public, read-only CMS content.
@@ -7,8 +8,7 @@ import type { Database } from "@/integrations/supabase/types";
  * visible categories/sections/nav, approved reviews, settings).
  */
 export function createPublicClient() {
-  const url = process.env.SUPABASE_URL!;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
+  const { url, key } = getPublicSupabaseEnv();
   return createClient<Database>(url, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
     global: {
